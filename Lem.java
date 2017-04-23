@@ -21,12 +21,15 @@
 
 package weka.classifiers.rules;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 
@@ -122,6 +125,15 @@ public class Lem extends AbstractClassifier implements
               for (Map.Entry<Attribute, ArrayList<HashMap<Instance,Object>>> entry :
                   listOfAttributeValues.entrySet()) {
 
+                ArrayList<HashMap<Instance,Object>> entryValues = entry.getValue();
+
+                for (int i = 0; i < entryValues.size(); i++) {
+
+                  //TODO implement comparison of Objects (depending on their type)
+
+                  Collection<Object> values = entryValues.get(i).values();
+
+                }
 
 
               }
@@ -162,10 +174,10 @@ public class Lem extends AbstractClassifier implements
     }
 
     for (Object classAttribute : enuAL) {
-      System.out.println(classAttribute.toString());
+      //System.out.println(classAttribute.toString());
       ArrayList<Instance> listOfInstancesPerClass = new ArrayList<>();
       for (Instance instance : instances) {
-        System.out.println(instance);
+        //System.out.println(instance);
         if (instance.stringValue(instance.classAttribute())
             .equals(String.valueOf(classAttribute))) {
           //System.out.println("i'm here");
@@ -194,20 +206,106 @@ public class Lem extends AbstractClassifier implements
       instances.setClass(instances.attribute("class"));
       //System.out.println("INst:"+instances.get(3).classAttribute().value(2));
       //Instances res = new Instances(instances).sort(instances.classAttribute().value(0));
+
       Enumeration<Object> enu = instances.classAttribute().enumerateValues();
-      ArrayList<Instance> result = new ArrayList<Instance>();
+
       ArrayList<ArrayList<Instance>> listOfLists = new ArrayList<>();
-      ArrayList<Object> enuAL = Collections.list(enu);
+      listOfLists = sortByClass(instances);
+      ArrayList<ArrayList<Instance>> m_ClassInstances = listOfLists;
+
+      //while (!m_ClassInstances.isEmpty()) {
+
+        for (ArrayList<Instance> listClassInstances : m_ClassInstances) {
 
 
-      HashMap<Attribute,Object> attValue = new HashMap<>();
-      Instance instance = instances.get(1);
-      Instance instance1 = instances.get(2);
-      for (int i=0; i<instance.numAttributes()-1;i++) {
-        attValue.put(instance.attribute(i),instance.value(instance.attribute(i)));
-        attValue.put(instance1.attribute(i),instance1.value(instance1.attribute(i)));
+          ListMultimap<Attribute, ArrayList<HashMap<Instance,Object>>> localCovering = ArrayListMultimap.create();//local covering of @param listOfAttributeValues
+          ListMultimap<Attribute, ArrayList<HashMap<Instance,Object>>> listOfAttributeValues =
+              ArrayListMultimap.create();
+
+          for (Instance instance : listClassInstances) {
+            int numAttr = instance.numAttributes()-1;//it should be removing classAtt value
+            for (int i = 0; i < numAttr; i++) {
+              ArrayList<HashMap<Instance,Object>> localList = new ArrayList<>();
+              HashMap<Instance, Object> localMap = new HashMap<>();
+              localMap.put(instance, instance.value(i));
+              localList.add(localMap);
+              listOfAttributeValues.put(instance.attribute(i), localList);
+
+            }
+
+
+        }
+         // System.out.println("List Of Attribute value: " + listOfAttributeValues);
+
+          /*
+          * Here we have listOfAttValues which looks like:
+          * {<@attribute petalwidth numeric >, <<[{5.1,3.5,1.4,0.2,Iris-setosa=0.2}]>,<[{4.7,3.2,1.3,0.2,Iris-setosa=0.2}]>...>,
+          * <@attribute petallength numeric >,<< ....>>,...>         *
+          *
+          * FOR A PARTICULAR CLASS!!! (we have 3 classes here in our example: iris-setosa,versicolor,virginica)
+          * */
+
+          //if local covering is empty or  for example: {1,2,7} from {1,2,3,7}
+         // while (localCovering.isEmpty() || localCovering.values().containsAll(listOfAttributeValues.values())) {
+            /*TODO implement algotithm of choosing best attributes
+            *
+            * */
+            int countOccurences = 0;
+            Object temp = new Object();
+
+            //occurenceces: <Pentallength, <1, 10 times>>...
+            HashMap<Attribute,HashMap<Object,Integer>> occurences = new HashMap<>();
+
+
+            for (Attribute att : listOfAttributeValues.keySet()) {
+              List<ArrayList<HashMap<Instance, Object>>> listInstanceAttValue =
+                  listOfAttributeValues.get(att);
+              HashMap<Object,Integer> internalOcc = new HashMap<>();
+              for (int i = 0; i < listInstanceAttValue.size(); i++) {
+                for (ArrayList<HashMap<Instance, Object>> list : listInstanceAttValue) {
+                  for (HashMap<Instance,Object> map : list) {
+                    Collection<Object> values = map.values();
+                    Object[] objects = values.toArray();
+                    Object res = objects[0];
+                    if (!internalOcc.containsKey(res)) {
+                      internalOcc.put(res,1);
+                    } else {
+                      internalOcc.put(res, internalOcc.get(res) + 1);
+                    }
+                  }
+                }
+              }
+              occurences.put(att,internalOcc);
+            }
+            System.out.println(occurences);
+
+
+
+
+
+         // }
+
+
+
+
+
       }
-      System.out.println(attValue);
+
+
+      //Enumeration<Object> enu = instances.classAttribute().enumerateValues();
+      //ArrayList<Instance> result = new ArrayList<Instance>();
+      //ArrayList<ArrayList<Instance>> listOfLists = new ArrayList<>();
+      //ArrayList<Object> enuAL = Collections.list(enu);
+      //
+      //
+      //HashMap<Attribute,Object> attValue = new HashMap<>();
+      //Instance instance = instances.get(1);
+      //Instance instance1 = instances.get(2);
+      //for (int i=0; i<instance.numAttributes()-1;i++) {
+      //  attValue.put(instance.attribute(i),instance.value(instance.attribute(i)));
+      //  attValue.put(instance1.attribute(i),instance1.value(instance1.attribute(i)));
+      //}
+      //System.out.println(attValue);
 
       //
       //for (Object classAttribute : enuAL) {
