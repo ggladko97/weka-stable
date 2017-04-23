@@ -31,9 +31,12 @@ import java.util.Collections;
 import java.util.Enumeration;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Sourcable;
 import weka.core.AbstractInstance;
@@ -47,38 +50,41 @@ import weka.core.RevisionUtils;
 import weka.core.Utils;
 import weka.core.WeightedInstancesHandler;
 
-/**
- * <!-- globalinfo-start --> Class for building and using a 0-R classifier.
- * Predicts the mean (for a numeric class) or the mode (for a nominal class).
- * <p/>
- * <!-- globalinfo-end -->
- * 
- * <!-- options-start --> Valid options are:
- * <p/>
- * 
- * <pre>
- * -D
- *  If set, classifier is run in debug mode and
- *  may output additional info to the console
- * </pre>
- * 
- * <!-- options-end -->
- * 
- * @author Eibe Frank (eibe@cs.waikato.ac.nz)
- * @version $Revision: 12024 $
- */
+/*
+*
+*
+* created by ggladko97 (Yevhenii Hladkevych)
+*
+*
+* */
 public class Lem extends AbstractClassifier implements
   WeightedInstancesHandler, Sourcable,AdditionalMeasureProducer {
 
   private Instances m_All;
 
-  private Instances m_ClassInstances; // K
+  private ArrayList<ArrayList<Instance>> m_ClassInstances; // K
 
   private ArrayList<Attribute> m_Rules = null; //P (p.215 manual)
 
 
   /** The class attribute of the data */
   private Attribute m_Class;//class attribute
+
+  public Instances getM_All() {
+    return m_All;
+  }
+
+  public void setM_All(Instances m_All) {
+    this.m_All = m_All;
+  }
+
+  public Attribute getM_Class() {
+    return m_Class;
+  }
+
+  public void setM_Class(Attribute m_Class) {
+    this.m_Class = m_Class;
+  }
 
   @Override
   public void buildClassifier(Instances data) throws Exception {
@@ -87,32 +93,88 @@ public class Lem extends AbstractClassifier implements
 
     instances.setClass(m_Class);
 
+    Enumeration<Object> enu = instances.classAttribute().enumerateValues();
+
     ArrayList<ArrayList<Instance>> listOfLists = new ArrayList<>();
+    listOfLists = sortByClass(instances);
+    m_ClassInstances = listOfLists;
 
-    Enumeration<Object> listOfClassAtt = instances.classAttribute().enumerateValues();
-    if (listOfClassAtt != null) {
-      while (listOfClassAtt.hasMoreElements()) {
-        sortByClass();
+    while (!m_ClassInstances.isEmpty()) {
 
-        for (int i = 0; i < m_All.size(); i++) {
-          for (int j = 0; j < m_All.get(i).classAttribute().numValues(); j++) {
-            if(m_All.get(i).classAttribute().value(j) == listOfClassAtt.nextElement()) {
-              //it's not good I know
-              m_ClassInstances.add(m_All.get(i));
-            }
+      for (ArrayList<Instance> listClassInstances : m_ClassInstances) {
+        Map<Attribute, ArrayList<HashMap<Instance,Object>>> localCovering = new HashMap<>();//local covering of @param listOfAttributeValues
+        Map<Attribute, ArrayList<HashMap<Instance,Object>>> listOfAttributeValues = new HashMap<>();
+
+        for (Instance instance : listClassInstances) {
+          int numAttr = instance.numAttributes()-1;//it should be removing classAtt value
+          for (int i = 0; i < numAttr; i++) {
+            ArrayList<HashMap<Instance,Object>> localList = new ArrayList<>();
+            HashMap<Instance, Object> localMap = new HashMap<>();
+            localMap.put(instance, instance.attribute(i));
+            localList.add(localMap);
+            listOfAttributeValues.put(instance.attribute(i), localList);
           }
+          while (localCovering.isEmpty() || localCovering.entrySet().containsAll(listOfAttributeValues.entrySet())) {
+              /*TODO implement algotithm of choosing best attributes
+              *
+              * */
+              int countOccurences = 0;
+              for (Map.Entry<Attribute, ArrayList<HashMap<Instance,Object>>> entry :
+                  listOfAttributeValues.entrySet()) {
+
+
+
+              }
+
+           // chooseAttributesLem(listOfAttributeValues);
+
+
+
+         }
+
+
         }
 
       }
 
-    } else {
-      //TODO deal with null pointer
     }
 
     // remove instances with missing class
   }
 
-  private void sortByClass() {
+
+
+  /*
+  * Sorting instances by class
+  *
+  * @param instances  input set of instances
+  *
+  * @return List with Lists of instances per each class  *
+  *
+  *
+  * */
+  private static ArrayList<ArrayList<Instance>> sortByClass(Instances instances) {
+    Enumeration<Object> enu = instances.classAttribute().enumerateValues();
+    ArrayList<ArrayList<Instance>> listOfLists = new ArrayList<>();
+    ArrayList<Object> enuAL = new ArrayList<>();
+    if (enu != null) {
+      enuAL = Collections.list(enu);
+    }
+
+    for (Object classAttribute : enuAL) {
+      System.out.println(classAttribute.toString());
+      ArrayList<Instance> listOfInstancesPerClass = new ArrayList<>();
+      for (Instance instance : instances) {
+        System.out.println(instance);
+        if (instance.stringValue(instance.classAttribute())
+            .equals(String.valueOf(classAttribute))) {
+          //System.out.println("i'm here");
+          listOfInstancesPerClass.add(instance);
+        }
+      }
+      listOfLists.add(listOfInstancesPerClass);
+    }
+    return listOfLists;
   }
 
   @Override
@@ -134,23 +196,56 @@ public class Lem extends AbstractClassifier implements
       //Instances res = new Instances(instances).sort(instances.classAttribute().value(0));
       Enumeration<Object> enu = instances.classAttribute().enumerateValues();
       ArrayList<Instance> result = new ArrayList<Instance>();
+      ArrayList<ArrayList<Instance>> listOfLists = new ArrayList<>();
       ArrayList<Object> enuAL = Collections.list(enu);
-      for (int i = 0; i < enuAL.size(); i++) {
-        for (int j = 0; j < instances.size(); j++) {
-          for (int k = 0; k < instances.get(j).classAttribute().numValues(); k++) {
-            System.out.println("Before check: " + "i:" + i + " j:" + j + " k" + k);
-            if(instances.get(j).classAttribute().value(k).equals(String.valueOf(enuAL.get(i)))) {
-              System.out.println("i:" + i + " j:" + j + " k" + k);
-              System.out.println("Instance: " + instances.get(j).classAttribute().value(k));
-              System.out.println("Compare with " + String.valueOf(enuAL.get(i)));
-              result.add(instances.get(j));
-              System.out.println(result);
-            }
-          }
-        }
-      }
-      System.out.println(result);
 
+
+      HashMap<Attribute,Object> attValue = new HashMap<>();
+      Instance instance = instances.get(1);
+      Instance instance1 = instances.get(2);
+      for (int i=0; i<instance.numAttributes()-1;i++) {
+        attValue.put(instance.attribute(i),instance.value(instance.attribute(i)));
+        attValue.put(instance1.attribute(i),instance1.value(instance1.attribute(i)));
+      }
+      System.out.println(attValue);
+
+      //
+      //for (Object classAttribute : enuAL) {
+      //  System.out.println(classAttribute.toString());
+      //  ArrayList<Instance> listOfInstancesPerClass = new ArrayList<>();
+      //  for (Instance instance : instances) {
+      //    System.out.println(instance);
+      //    if (instance.stringValue(instance.classAttribute()).equals(String.valueOf(classAttribute))) {
+      //      //System.out.println("i'm here");
+      //      listOfInstancesPerClass.add(instance);
+      //    }
+      //  }
+      //  listOfLists.add(listOfInstancesPerClass);
+      //
+      //}
+      //
+      //System.out.println(listOfLists);
+
+      //for (int i = 0; i < enuAL.size(); i++) {
+      //  ArrayList<Instance> listAttribute = new ArrayList<>();
+      //  listOfLists.add(listAttribute);
+      //  for (int j = 0; j < instances.size(); j++) {
+      //    for (int k = 0; k < instances.get(j).classAttribute().numValues(); k++) {
+      //      System.out.println("Before check: " + "i:" + i + " j:" + j + " k" + k);
+      //      if(instances.get(j).classAttribute().value(k).equals(String.valueOf(enuAL.get(i)))) {
+      //        System.out.println("i:" + i + " j:" + j + " k" + k);
+      //        System.out.println("Instance: " + instances.get(j).classAttribute().value(k));
+      //        System.out.println("Compare with " + String.valueOf(enuAL.get(i)));
+      //
+      //        listAttribute.add(instances.get(j));
+      //        System.out.println(listAttribute);
+      //        System.out.println(listOfLists);
+      //      }
+      //    }
+      //  }
+      //}
+      //System.out.println(listOfLists);
+      //
 
       //while (enu.hasMoreElements()) {
       //  System.out.println("Next elem: + " + enu.nextElement());
