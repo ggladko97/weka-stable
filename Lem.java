@@ -26,31 +26,22 @@ import com.google.common.collect.ListMultimap;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Sourcable;
-import weka.core.AbstractInstance;
 import weka.core.AdditionalMeasureProducer;
 import weka.core.Attribute;
-import weka.core.Capabilities;
-import weka.core.Capabilities.Capability;
 import weka.core.Instance;
 import weka.core.Instances;
-import weka.core.RevisionUtils;
-import weka.core.Utils;
 import weka.core.WeightedInstancesHandler;
 
 /*
@@ -199,11 +190,28 @@ public class Lem extends AbstractClassifier implements
     return 0;
   }
 
+
+
+  /*
+  * sort listOfAttributeValues to format: <Attribute,<Value, Occurenceses>>
+  *   @param listOfAttributeValues input set
+  *   @return HashMap with occurenceces of each Attribute.value
+  *
+  * */
+  private static HashMap<Attribute, HashMap<Object, Integer>> countOccurences (
+      ListMultimap<Attribute, ArrayList<HashMap<Instance, Object>>> listOfAttributeValues) {
+
+    return null;
+  }
+
   public static void main(String[] argv) {
     try {
       BufferedReader br = new BufferedReader(new FileReader("/home/ggladko97/Downloads/weka-3-8-1/data/iriska.arff"));
       Instances instances = new Instances(br);
       instances.setClass(instances.attribute("class"));
+      PrintWriter out = new PrintWriter(new FileWriter("/home/ggladko97/Desktop/log.txt", true), true);
+     // out.write(occurences.toString());
+     // out.close();
       //System.out.println("INst:"+instances.get(3).classAttribute().value(2));
       //Instances res = new Instances(instances).sort(instances.classAttribute().value(0));
 
@@ -246,44 +254,26 @@ public class Lem extends AbstractClassifier implements
           * */
 
           //if local covering is empty or  for example: {1,2,7} from {1,2,3,7}
-         // while (localCovering.isEmpty() || localCovering.values().containsAll(listOfAttributeValues.values())) {
-            /*TODO implement algotithm of choosing best attributes
-            *
-            * */
-            int countOccurences = 0;
-            Object temp = new Object();
+          while (localCovering.isEmpty() || localCovering.values().containsAll(listOfAttributeValues.values())) {
 
             //occurenceces: <Pentallength, <1, 10 times>>...
             HashMap<Attribute,HashMap<Object,Integer>> occurences = new HashMap<>();
 
+            //TODO: implemet method
+            HashMap<Attribute,HashMap<Object,Integer>> sortedOccs = countOccurences(listOfAttributeValues);
 
-            for (Attribute att : listOfAttributeValues.keySet()) {
-              List<ArrayList<HashMap<Instance, Object>>> listInstanceAttValue =
-                  listOfAttributeValues.get(att);
-              HashMap<Object,Integer> internalOcc = new HashMap<>();
-              for (int i = 0; i < listInstanceAttValue.size(); i++) {
-                for (ArrayList<HashMap<Instance, Object>> list : listInstanceAttValue) {
-                  for (HashMap<Instance,Object> map : list) {
-                    Collection<Object> values = map.values();
-                    Object[] objects = values.toArray();
-                    Object res = objects[0];
-                    if (!internalOcc.containsKey(res)) {
-                      internalOcc.put(res,1);
-                    } else {
-                      internalOcc.put(res, internalOcc.get(res) + 1);
-                    }
-                  }
-                }
-              }
-              occurences.put(att,internalOcc);
-            }
-            System.out.println(occurences);
+            //just for test
+            int i=0;
+
+            //BufferedWriter writer = new BufferedWriter(new FileWriter(new File("/home/ggladko97/Desktop/log.txt")));
+            //writer.write(occurences.toString());
 
 
 
 
 
-         // }
+
+          }
 
 
 
@@ -406,6 +396,8 @@ public class Lem extends AbstractClassifier implements
 
     //runClassifier(new Lem(), argv);
   }
+
+
 
   @Override public String toSource(String className) throws Exception {
     return null;
