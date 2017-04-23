@@ -43,6 +43,7 @@ import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.WeightedInstancesHandler;
+import weka.core.pmml.Array;
 
 /*
 *
@@ -204,6 +205,18 @@ public class Lem extends AbstractClassifier implements
     return null;
   }
 
+  /*
+  *  searching for best fitting pair <Attribute,<Value, Occurence>>
+  *   @param sortedOccs list with <Attribute,<Value, Occurence>> counted
+  *   @return one element Hash Map <Attribute,<Value, Occurence>>
+  *   if our HashMap will return more then 1 element we should implement another
+  *   method as in pseudokod P.dr. Wrzesznia
+  *
+  * */
+  private static HashMap<Attribute, HashMap<Object, Integer>> checkHighestPriority(HashMap<Attribute, HashMap<Object, Integer>> sortedOccs) {
+    return null;
+  }
+
   public static void main(String[] argv) {
     try {
       BufferedReader br = new BufferedReader(new FileReader("/home/ggladko97/Downloads/weka-3-8-1/data/iriska.arff"));
@@ -226,7 +239,7 @@ public class Lem extends AbstractClassifier implements
         for (ArrayList<Instance> listClassInstances : m_ClassInstances) {
 
 
-          ListMultimap<Attribute, ArrayList<HashMap<Instance,Object>>> localCovering = ArrayListMultimap.create();//local covering of @param listOfAttributeValues
+          ListMultimap<Attribute, ArrayList<Object>> localCovering = ArrayListMultimap.create();//local covering of @param listOfAttributeValues
           ListMultimap<Attribute, ArrayList<HashMap<Instance,Object>>> listOfAttributeValues =
               ArrayListMultimap.create();
 
@@ -262,8 +275,17 @@ public class Lem extends AbstractClassifier implements
             //TODO: implemet method
             HashMap<Attribute,HashMap<Object,Integer>> sortedOccs = countOccurences(listOfAttributeValues);
 
-            //just for test
-            int i=0;
+            //TODO: implement method
+            HashMap<Attribute,HashMap<Object,Integer>> highestPriority = checkHighestPriority(sortedOccs);
+
+            //add best attribute-value pairs to local covering
+            ArrayList<Object> values = new ArrayList<>();
+            for (Map.Entry<Attribute, HashMap<Object, Integer>> map : highestPriority.entrySet()) {
+              values.add(map.getValue());
+              localCovering.put(map.getKey(),values);
+            }
+
+
 
             //BufferedWriter writer = new BufferedWriter(new FileWriter(new File("/home/ggladko97/Desktop/log.txt")));
             //writer.write(occurences.toString());
