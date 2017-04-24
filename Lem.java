@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Sourcable;
@@ -43,7 +44,6 @@ import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.WeightedInstancesHandler;
-import weka.core.pmml.Array;
 
 /*
 *
@@ -129,20 +129,10 @@ public class Lem extends AbstractClassifier implements
 
 
               }
-
-           // chooseAttributesLem(listOfAttributeValues);
-
-
-
-         }
-
-
+          }
         }
-
       }
-
     }
-
     // remove instances with missing class
   }
 
@@ -157,7 +147,7 @@ public class Lem extends AbstractClassifier implements
   *
   *
   * */
-  private static ArrayList<ArrayList<Instance>> sortByClass(Instances instances) {
+  public static ArrayList<ArrayList<Instance>> sortByClass(Instances instances) {
     Enumeration<Object> enu = instances.classAttribute().enumerateValues();
     ArrayList<ArrayList<Instance>> listOfLists = new ArrayList<>();
     ArrayList<Object> enuAL = new ArrayList<>();
@@ -203,22 +193,47 @@ public class Lem extends AbstractClassifier implements
       ListMultimap<Attribute, ArrayList<HashMap<Instance, Object>>> listOfAttributeValues) {
 
     ListMultimap<Attribute, HashMap<Object, Integer>> resultMap = ArrayListMultimap.create();
-    HashMap<Object, Integer> hmOcc = new HashMap<>();
 
-    for ( Map.Entry<Attribute, ArrayList<HashMap<Instance, Object>>> entries : listOfAttributeValues.entries()) {
-      Attribute key = entries.getKey();
-      for (HashMap<Instance, Object> internalValue : entries.getValue()) {
-        for (Map.Entry<Instance, Object> entry : internalValue.entrySet()) {
-          if (!hmOcc.containsKey(entry.getValue())) {
-            hmOcc.put(entry.getValue(),1);
-          } else {
-            hmOcc.put(entry.getValue(),hmOcc.get(entry.getValue())+1);
-          }
+
+    for (Attribute att : listOfAttributeValues.keySet()) {
+      HashMap<Object, Integer> hmOcc = new HashMap<>();
+      System.out.println(att);
+      List<ArrayList<HashMap<Instance, Object>>> bigList = listOfAttributeValues.get(att);
+      System.out.println("BigList: "+bigList);
+      for (ArrayList<HashMap<Instance, Object>> value : bigList) {
+        //System.out.println("Little list: " +value);
+        Object obj = value.get(0).values().toArray()[0];
+        System.out.println(obj);
+        if (!hmOcc.containsKey(obj)) {
+          hmOcc.put(obj,1);
+        } else {
+          hmOcc.put(obj,hmOcc.get(obj)+1);
         }
-
       }
-      resultMap.put(key,hmOcc);
+      resultMap.put(att,hmOcc);
+      //System.out.println("HMOCC: " + hmOcc);
+
+
     }
+    System.out.println("ResultMap: " + resultMap);
+    //for (Attribute key : listOfAttributeValues.keySet()) {
+    //  System.out.println("Next att: " + key);
+    //  for (ArrayList<HashMap<Instance, Object>> internalValue : listOfAttributeValues.get(key)) {
+    //    System.out.println("next internal value: " + internalValue);
+    //    for (HashMap<Instance, Object> entry : internalValue) {
+    //      System.out.println("\nNext entry: " +entry);
+    //      for (Map.Entry<Instance,Object> entryInternal : entry.entrySet()) {
+    //        System.out.println("I'm in entry: " + entry + "\nentryInternal: " + entryInternal + "\nentryInternal.value: " + entryInternal.getValue());
+    //        if (!hmOcc.containsKey(entryInternal.getValue())) {
+    //          hmOcc.put(entryInternal.getValue(),1);
+    //        } else {
+    //          hmOcc.put(entryInternal.getValue(),hmOcc.get(entryInternal.getValue())+1);
+    //        }
+    //      }
+    //    }
+    //  }
+    //  resultMap.put(key,hmOcc);
+    //}
     return resultMap;
   }
 
@@ -261,7 +276,7 @@ public class Lem extends AbstractClassifier implements
       ArrayList<ArrayList<Instance>> m_ClassInstances = listOfLists;
 
       //while (!m_ClassInstances.isEmpty()) {
-
+        int forDEpth=0;
         for (ArrayList<Instance> listClassInstances : m_ClassInstances) {
 
 
@@ -282,7 +297,7 @@ public class Lem extends AbstractClassifier implements
 
 
         }
-         // System.out.println("List Of Attribute value: " + listOfAttributeValues);
+          //System.out.println("List Of Attribute value: " + listOfAttributeValues);
 
           /*
           * Here we have listOfAttValues which looks like:
@@ -292,28 +307,32 @@ public class Lem extends AbstractClassifier implements
           * FOR A PARTICULAR CLASS!!! (we have 3 classes here in our example: iris-setosa,versicolor,virginica)
           * */
 
+          //TODO: implemet method
+          ListMultimap<Attribute, HashMap<Object, Integer>> sortedOccs = countOccurences(listOfAttributeValues);
+
+          System.out.println("SORTED #" + forDEpth+":"+sortedOccs);
+          forDEpth++;
+
           //if local covering is empty or  for example: {1,2,7} from {1,2,3,7}
-          while (localCovering.isEmpty() || !localCovering.values().containsAll(listOfAttributeValues.values())) {
-
-            //occurenceces: <Pentallength, <1, 10 times>>...
-            HashMap<Attribute,HashMap<Object,Integer>> occurences = new HashMap<>();
-
-            //TODO: implemet method
-            ListMultimap<Attribute, HashMap<Object, Integer>> sortedOccs = countOccurences(listOfAttributeValues);
-
-            //TODO: implement method
-            HashMap<Attribute,HashMap<Object,Integer>> highestPriority = checkHighestPriority(sortedOccs);
-
-            //add best attribute-value pairs to local covering
-            ArrayList<Object> values = new ArrayList<>();
-            for (Map.Entry<Attribute, HashMap<Object, Integer>> map : highestPriority.entrySet()) {
-              values.add(map.getValue());
-              localCovering.put(map.getKey(),values);
-            }
-            //TODO: implement method
-            removeUsed(listClassInstances);
-
-          }
+          //while (localCovering.isEmpty() || !localCovering.values().containsAll(listOfAttributeValues.values())) {
+          //
+          //  //occurenceces: <Pentallength, <1, 10 times>>...
+          //  HashMap<Attribute,HashMap<Object,Integer>> occurences = new HashMap<>();
+          //
+          //
+          //  //TODO: implement method
+          // // HashMap<Attribute,HashMap<Object,Integer>> highestPriority = checkHighestPriority(sortedOccs);
+          //
+          //  //add best attribute-value pairs to local covering
+          //  //ArrayList<Object> values = new ArrayList<>();
+          //  //for (Map.Entry<Attribute, HashMap<Object, Integer>> map : highestPriority.entrySet()) {
+          //  //  values.add(map.getValue());
+          //  //  localCovering.put(map.getKey(),values);
+          //  //}
+          //  ////TODO: implement method
+          //  //removeUsed(listClassInstances);
+          //
+          //}
       }
 
 
