@@ -199,10 +199,27 @@ public class Lem extends AbstractClassifier implements
   *   @return HashMap with occurenceces of each Attribute.value
   *
   * */
-  private static HashMap<Attribute, HashMap<Object, Integer>> countOccurences (
+  public static ListMultimap<Attribute, HashMap<Object, Integer>> countOccurences (
       ListMultimap<Attribute, ArrayList<HashMap<Instance, Object>>> listOfAttributeValues) {
 
-    return null;
+    ListMultimap<Attribute, HashMap<Object, Integer>> resultMap = ArrayListMultimap.create();
+    HashMap<Object, Integer> hmOcc = new HashMap<>();
+
+    for ( Map.Entry<Attribute, ArrayList<HashMap<Instance, Object>>> entries : listOfAttributeValues.entries()) {
+      Attribute key = entries.getKey();
+      for (HashMap<Instance, Object> internalValue : entries.getValue()) {
+        for (Map.Entry<Instance, Object> entry : internalValue.entrySet()) {
+          if (!hmOcc.containsKey(entry.getValue())) {
+            hmOcc.put(entry.getValue(),1);
+          } else {
+            hmOcc.put(entry.getValue(),hmOcc.get(entry.getValue())+1);
+          }
+        }
+
+      }
+      resultMap.put(key,hmOcc);
+    }
+    return resultMap;
   }
 
   /*
@@ -213,8 +230,17 @@ public class Lem extends AbstractClassifier implements
   *   method as in pseudokod P.dr. Wrzesznia
   *
   * */
-  private static HashMap<Attribute, HashMap<Object, Integer>> checkHighestPriority(HashMap<Attribute, HashMap<Object, Integer>> sortedOccs) {
+  private static HashMap<Attribute, HashMap<Object, Integer>> checkHighestPriority(ListMultimap<Attribute, HashMap<Object, Integer>> sortedOccs) {
     return null;
+  }
+
+/*
+* removing used Instances of values that have been added to output set
+* also it should update list of localCo
+* @param our Instances for a particular class
+*
+* */
+  private static void removeUsed(ArrayList<Instance> listClassInstances) {
   }
 
   public static void main(String[] argv) {
@@ -267,13 +293,13 @@ public class Lem extends AbstractClassifier implements
           * */
 
           //if local covering is empty or  for example: {1,2,7} from {1,2,3,7}
-          while (localCovering.isEmpty() || localCovering.values().containsAll(listOfAttributeValues.values())) {
+          while (localCovering.isEmpty() || !localCovering.values().containsAll(listOfAttributeValues.values())) {
 
             //occurenceces: <Pentallength, <1, 10 times>>...
             HashMap<Attribute,HashMap<Object,Integer>> occurences = new HashMap<>();
 
             //TODO: implemet method
-            HashMap<Attribute,HashMap<Object,Integer>> sortedOccs = countOccurences(listOfAttributeValues);
+            ListMultimap<Attribute, HashMap<Object, Integer>> sortedOccs = countOccurences(listOfAttributeValues);
 
             //TODO: implement method
             HashMap<Attribute,HashMap<Object,Integer>> highestPriority = checkHighestPriority(sortedOccs);
@@ -284,23 +310,10 @@ public class Lem extends AbstractClassifier implements
               values.add(map.getValue());
               localCovering.put(map.getKey(),values);
             }
-
-
-
-            //BufferedWriter writer = new BufferedWriter(new FileWriter(new File("/home/ggladko97/Desktop/log.txt")));
-            //writer.write(occurences.toString());
-
-
-
-
-
+            //TODO: implement method
+            removeUsed(listClassInstances);
 
           }
-
-
-
-
-
       }
 
 
